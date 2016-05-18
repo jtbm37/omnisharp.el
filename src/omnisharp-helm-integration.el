@@ -30,9 +30,15 @@
     (message "Helm Finding usages...")
     (omnisharp--send-command-to-server
      "findusages"
-     (omnisharp--get-request-object)
+     (->>
+      (omnisharp--get-request-object)
+      (cons '(ExcludeDefinition . "true")))
      (-lambda ((&alist 'QuickFixes quickfixes))
-              (omnisharp--helm-got-usages quickfixes))))
+       (if (= (length quickfixes) 1)
+           (let* ((line (cdr (assoc 'Line (elt quickfixes 0))))
+                  (column (- (cdr (assoc 'Column (elt quickfixes 0))) 1)))
+             (omnisharp--go-to-line-and-column line column))
+         (omnisharp--helm-got-usages quickfixes))))
 
   (defun omnisharp--helm-jump-to-candidate (json-result)
     (omnisharp-go-to-file-line-and-column json-result)
