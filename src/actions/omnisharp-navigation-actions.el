@@ -134,4 +134,26 @@ use another window."
    (-lambda ((&alist 'QuickFixes quickfixes))
             (omnisharp--choose-and-go-to-quickfix-ido quickfixes other-window))))
 
+(defun omnisharp-navigate-up ()
+  "Jump to the definition of the symbol under point. With prefix
+argument, use another window."
+  (interactive)
+  (omnisharp--navigate-up-or-down "navigateup"))
+
+(defun omnisharp-navigate-up ()
+  "Jump to the definition of the symbol under point. With prefix
+argument, use another window."
+  (interactive)
+  (omnisharp--navigate-up-or-down "navigateup"))
+
+(defun omnisharp--navigate-up-or-down (url)
+  "Navigates either up or down"
+  (omnisharp--send-command-to-server
+   url
+   (omnisharp--get-request-object)
+   (lambda (response)
+     (let ((line (cdr (assoc 'Line response)))
+           (column (- (cdr (assoc 'Column response)) 1)))
+       (omnisharp--go-to-line-and-column line column)))))
+
 (provide 'omnisharp-navigation-actions)
