@@ -140,11 +140,11 @@ argument, use another window."
   (interactive)
   (omnisharp--navigate-up-or-down "navigateup"))
 
-(defun omnisharp-navigate-up ()
+(defun omnisharp-navigate-down ()
   "Jump to the definition of the symbol under point. With prefix
 argument, use another window."
   (interactive)
-  (omnisharp--navigate-up-or-down "navigateup"))
+  (omnisharp--navigate-up-or-down "navigatedown"))
 
 (defun omnisharp--navigate-up-or-down (url)
   "Navigates either up or down"
