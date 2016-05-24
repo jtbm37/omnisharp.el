@@ -35,9 +35,7 @@
       (cons '(ExcludeDefinition . "true")))
      (-lambda ((&alist 'QuickFixes quickfixes))
        (if (= (length quickfixes) 1)
-           (let* ((line (cdr (assoc 'Line (elt quickfixes 0))))
-                  (column (- (cdr (assoc 'Column (elt quickfixes 0))) 1)))
-             (omnisharp--go-to-line-and-column line column))
+           (omnisharp-go-to-file-line-and-column (elt quickfixes 0))
          (omnisharp--helm-got-usages quickfixes)))))
 
   (defun omnisharp--helm-jump-to-candidate (json-result)
