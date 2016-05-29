@@ -42,7 +42,9 @@ ring."
   (message "Finding usages...")
   (omnisharp--send-command-to-server
    "findusages"
-   (omnisharp--get-request-object)
+   (->>
+    (omnisharp--get-request-object)
+    (cons '(ExcludeDefinition . "true")))
    (-lambda ((&alist 'QuickFixes quickfixes))
             (omnisharp--find-usages-show-response quickfixes))))
 
