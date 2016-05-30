@@ -1,4 +1,10 @@
 ;; -*- lexical-binding: t -*-
+(defcustom omnisharp-find-usages-exclude-definition t
+  "Set to t if you want to exclude the member definition
+  from the usages"
+  :group 'omnisharp
+  :type '(choice (const :tag "Yes" t)
+                 (const :tag "No" nil)))
 
 (defun omnisharp-current-type-information (&optional add-to-kill-ring)
   "Display information of the current type under point. With prefix
@@ -44,7 +50,8 @@ ring."
    "findusages"
    (->>
     (omnisharp--get-request-object)
-    (cons '(ExcludeDefinition . "true")))
+    (cons `(ExcludeDefinition . ,(omnisharp--t-or-json-false
+                                 omnisharp-find-usages-exclude-definition))))
    (-lambda ((&alist 'QuickFixes quickfixes))
             (omnisharp--find-usages-show-response quickfixes))))
 
