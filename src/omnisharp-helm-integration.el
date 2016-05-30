@@ -1,4 +1,12 @@
 ;; -*- mode: Emacs-Lisp; lexical-binding: t; -*-
+(defcustom omnisharp-find-symbols-filter-async nil
+  "Set to t if you want to let the server filter
+  the symbols. This must be set to t if the project has
+a lot of symbols which could make emacs freeze for several
+seconds."
+  :group 'omnisharp
+  :type '(choice (const :tag "Yes" t)
+                 (const :tag "No" nil)))
 
 (when (require 'helm-grep nil 'noerror)
   ;;; Helm usages
@@ -45,27 +53,31 @@
   ;;; Helm find symbols
   (defun omnisharp-helm-find-symbols ()
     (interactive)
-    (helm :sources (helm-make-source "Omnisharp - Find Symbols" 'helm-source-sync
+    (helm :sources (helm-build-async-source "Omnisharp - Find Symbols"
                                      :action 'omnisharp--helm-jump-to-candidate
                                      :matchplugin nil
                                      :match '((lambda (candidate) (string-match-p
                                                                    helm-pattern
                                                                    (nth 1 (split-string
                                                                            candidate ":" t)))))
-                                     :candidates (omnisharp--helm-find-symbols-candidates))
+                                     :candidates-process 'omnisharp--helm-find-symbols-candidates)
           :buffer "*Omnisharp Symbols*"
           :truncate-lines t))
 
   (defun omnisharp--helm-find-symbols-candidates ()
+    (when (or (and omnisharp-find-symbols-filter-async (not (string= helm-input "")))
+              (not omnisharp-find-symbols-filter-async))
     (let (candidates)
+      (message "fetching new candidates %s" helm-input)
       (omnisharp--send-command-to-server-sync
        "findsymbols"
-       '((Filter . ""))
+       (cons `(Filter . ,helm-input)
+             (omnisharp--get-request-object))
        (-lambda ((&alist 'QuickFixes quickfixes))
                 (setq candidates
                       (-map 'omnisharp--helm-find-symbols-transform-candidate
                             quickfixes))))
-      candidates))
+      candidates)))
 
   (defun omnisharp--helm-find-symbols-transform-candidate (candidate)
     "Convert a quickfix entry into helm output"
