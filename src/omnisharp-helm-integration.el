@@ -61,6 +61,7 @@ seconds."
                                                                    (nth 1 (split-string
                                                                            candidate ":" t)))))
                                      :candidates-process 'omnisharp--helm-find-symbols-candidates)
+          :input-idle-delay 0.5
           :buffer "*Omnisharp Symbols*"
           :truncate-lines t))
 
