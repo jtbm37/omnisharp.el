@@ -478,6 +478,16 @@ cursor at that location"
     (error nil
            (omnisharp--eldoc-default))))
 
+(defun omnisharp-build-current-project ()
+  (interactive)
+  (omnisharp--send-command-to-server-sync
+   "buildproject"
+   (->> (list (assoc 'FileName (omnisharp--get-request-object)))
+        (cons '(Language . "C#")))
+   (lambda (response)
+     (message "Build completed"))
+   t))
+
 (add-to-list 'compilation-error-regexp-alist
              '(" in \\(.+\\):\\([1-9][0-9]+\\)" 1 2))
 
