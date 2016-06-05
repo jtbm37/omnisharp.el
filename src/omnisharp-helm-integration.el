@@ -89,4 +89,28 @@ seconds."
              (nth 0 (split-string (cdr (assoc 'Text candidate)) "(")))
      candidate)))
 
+;;; Helm list projects
+(defun omnisharp-helm-projects ()
+  (interactive)
+  (helm :sources (helm-build-async-source "Omnisharp - Projects"
+                   :action 'omnisharp--helm-jump-to-file
+                   :matchplugin nil
+                   :candidates-process 'omnisharp--helm-projects-candidates)
+        :truncate-lines t))
+
+(defun omnisharp--helm-jump-to-file (candidate)
+  (find-file (cdr candidate)))
+
+(defun omnisharp--helm-projects-candidates ()
+  (let (candidates)
+    (omnisharp--send-command-to-server-sync
+     "projects"
+     (->> (omnisharp--get-request-object)
+          (cons '(ExcludeSourceFiles . t)))
+     (lambda (data)
+       (let ((projects (cdr (assoc 'Projects (cdr (assoc 'MsBuild data))))))
+         (setq candidates (-map '(lambda (candidate) (cons (format "%s" (cdr (assoc 'AssemblyName candidate))) (list (assoc 'Path candidate)))) projects))
+         ))
+     nil)
+    candidates))
 (provide 'omnisharp-helm-integration)
