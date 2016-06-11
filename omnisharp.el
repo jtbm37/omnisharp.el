@@ -485,7 +485,9 @@ cursor at that location"
    (->> (list (assoc 'FileName (omnisharp--get-request-object)))
         (cons '(Language . "C#")))
    (lambda (response)
-     (message "Build completed"))
+     (if (eq (cdr (assoc 'Success response)) t)
+         (message "Build completed")
+       (message "Build failed!")))
    t))
 
 (add-to-list 'compilation-error-regexp-alist
