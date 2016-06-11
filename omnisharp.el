@@ -113,6 +113,8 @@ server backend."
 
 (defvar omnisharp--eldoc-fontification-buffer-name " * OmniSharp : Eldoc Fontification *"
   "The name of the buffer that is used to fontify eldoc strings.")
+(defvar omnisharp-build-functions nil
+  "Abnormal hook triggered when `'omnisharp-build-current-project completes.")
 
 (defun omnisharp--region-start-line ()
   (when mark-active
@@ -487,7 +489,8 @@ cursor at that location"
    (lambda (response)
      (if (eq (cdr (assoc 'Success response)) t)
          (message "Build completed")
-       (message "Build failed!")))
+       (message "Build failed!"))
+     (run-hook-with-args 'omnisharp-build-functions response))
    t))
 
 (add-to-list 'compilation-error-regexp-alist
