@@ -115,4 +115,20 @@ seconds."
          ))
      nil)
     candidates))
+
+(defun omnisharp-helm-current-file-members ()
+  "Show a list of all members in the current file, and jump to the
+selected member. With prefix argument, use another window."
+  (interactive)
+    (omnisharp--send-command-to-server
+     "currentfilemembersasflat"
+     (omnisharp--get-request-object)
+     (lambda (quickfixes)
+       (setq candidates (-map (lambda (q)
+                                (cons  (cdr  (assoc 'Text q)) q)) (append quickfixes nil)))
+       (helm :sources (helm-make-source "OmniSharp - File Members" 'helm-source-sync
+                        :action 'omnisharp-go-to-file-line-and-column
+                        :candidates candidates)
+             ))))
+
 (provide 'omnisharp-helm-integration)
