@@ -1,0 +1,9 @@
+#+TITLE:	omnisharp.el
+#+AUTHOR:	jtbm37
+#+DATE:		2016-06-26
+#+UPDATE:	15:24:12
+#+STARTUP:	content
+
+This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][omnisharp mode]]. 
+
+To be continued..
