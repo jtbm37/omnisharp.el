@@ -8,12 +8,21 @@ This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][o
 
 This will only work with [[https://github.com/OmniSharp/omnisharp-roslyn/][omnisharp-roslyn]] server.
 
+** Installation
+   As this is a fork, it cannot be on melpa. You will have to clone the repo and load it locally.
+
+*** With Spacemacs
+    I use this [[https://gist.github.com/jtbm37/f8aacc57192b65b5387ba9a159b3b47b][custom layer]]. Put it in your layer folder and add it to =dotspacemacs-configuration-layers=.
+
+
 ** Configuration
 
 *** Fuzzy completion
+    By default, completion is quite simple and doesn't allow you to fuzzy complete. 
+    Set these variables in your init file to get fuzzy completion.
     #+BEGIN_SRC elisp
-    (setq omnisharp-company-match-type 'company-match-flx
-    omnisharp-company-match-sort-by-flx-score t)
+      (setq omnisharp-company-match-type 'company-match-flx
+            omnisharp-company-match-sort-by-flx-score t)
     #+END_SRC
 
 
