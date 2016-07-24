@@ -113,8 +113,12 @@ server backend."
 
 (defvar omnisharp--eldoc-fontification-buffer-name " * OmniSharp : Eldoc Fontification *"
   "The name of the buffer that is used to fontify eldoc strings.")
+
 (defvar omnisharp-build-functions nil
   "Abnormal hook triggered when `'omnisharp-build-current-project completes.")
+
+(defvar omnisharp-test-functions nil
+  "Abnormal hook triggered when `'omnisharp-test-{class,current,project} complete.")
 
 (defun omnisharp--region-start-line ()
   (when mark-active
@@ -494,6 +498,33 @@ cursor at that location"
      (run-hook-with-args 'omnisharp-build-functions response))
    t))
 
+(defun omnisharp-test-current-project ()
+  (interactive)
+  (omnisharp--run-test "All"))
+
+(defun omnisharp-test-current-class ()
+  (interactive)
+  (omnisharp--run-test "CurrentClass"))
+
+(defun omnisharp-test-current-method ()
+  (interactive)
+  (omnisharp--run-test "CurrentTest"))
+
+(defun omnisharp--run-test (type)
+  (message "Running tests...")
+  (omnisharp--send-command-to-server-sync
+   "mstest"
+   (append
+    (omnisharp--get-request-object)
+    `((Type . ,type))
+    '((Language . "C#")))
+   (lambda (response)
+     (if (eq (cdr (assoc 'Success response)) t)
+         (message "Tests successful")
+       (message "Tests failed!"))
+     (run-hook-with-args 'omnisharp-test-functions response)
+     )
+   t))
 (add-to-list 'compilation-error-regexp-alist
              '(" in \\(.+\\):\\([1-9][0-9]+\\)" 1 2))
 
