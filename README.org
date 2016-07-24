@@ -4,6 +4,6 @@
 #+UPDATE:	15:24:12
 #+STARTUP:	content
 
-This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][omnisharp mode]]. 
+This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][omnisharp mode]]. This has been created due to lack of interest from original author.
 
-To be continued..
+This will only work with [[https://github.com/OmniSharp/omnisharp-roslyn/][omnisharp-roslyn]] server.
