@@ -7,3 +7,14 @@
 This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][omnisharp mode]]. This has been created due to lack of interest from original author.
 
 This will only work with [[https://github.com/OmniSharp/omnisharp-roslyn/][omnisharp-roslyn]] server.
+
+** Configuration
+
+*** Fuzzy completion
+    #+BEGIN_SRC elisp
+    (setq omnisharp-company-match-type 'company-match-flx
+    omnisharp-company-match-sort-by-flx-score t)
+    #+END_SRC
+
+
+
