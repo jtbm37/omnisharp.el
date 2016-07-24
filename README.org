@@ -9,13 +9,26 @@ This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][o
 This will only work with [[https://github.com/OmniSharp/omnisharp-roslyn/][omnisharp-roslyn]] server.
 
 ** Installation
-   As this is a fork, it cannot be on melpa. You will have to clone the repo and load it locally.
+   As this is a fork, it cannot be on melpa.
 
-*** With Spacemacs
-    I use this [[https://gist.github.com/jtbm37/f8aacc57192b65b5387ba9a159b3b47b][custom layer]]. Put it in your layer folder and add it to =dotspacemacs-configuration-layers=.
+   1) Clone the repo
+
+   2) Generate the autoloads
+
+   3) Load them in your init.file
+
+   #+BEGIN_SRC elisp
+   
+  (add-to-load-path (expand-file-name "~/path/to/omnisharp.el"))
+  (load "omnisharp-autoloads.el")
+   
+   #+END_SRC
 
 
 ** Configuration
+
+*** Spacemacs
+    I use this [[https://gist.github.com/jtbm37/f8aacc57192b65b5387ba9a159b3b47b][custom layer]]. Put it in your layer folder and add it to =dotspacemacs-configuration-layers=.
 
 *** Fuzzy completion
     By default, completion is quite simple and doesn't allow you to fuzzy complete. 
