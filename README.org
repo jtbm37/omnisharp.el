@@ -8,6 +8,12 @@ This is a fork of the official [[https://github.com/OmniSharp/omnisharp-emacs][o
 
 This will only work with [[https://github.com/OmniSharp/omnisharp-roslyn/][omnisharp-roslyn]] server.
 
+** Prerequisites
+
+   Omnisharp-roslyn must be installed and present in your PATH.
+
+   The following emacs packages are needed: dash.el, flycheck, company, TBD...
+
 ** Installation
    As this is a fork, it cannot be on melpa.
 
