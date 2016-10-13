@@ -57,7 +57,6 @@ seconds."
     (interactive)
     (helm :sources (helm-build-async-source "Omnisharp - Find Symbols"
                                      :action 'omnisharp--helm-jump-to-candidate
-                                     :matchplugin nil
                                      :match '((lambda (candidate) (string-match-p
                                                                    helm-pattern
                                                                    (nth 1 (split-string
