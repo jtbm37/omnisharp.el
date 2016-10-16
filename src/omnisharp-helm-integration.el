@@ -46,49 +46,41 @@ seconds."
               (omnisharp-go-to-file-line-and-column (elt quickfixes 0)))
              ((> (length quickfixes) 1)
               (omnisharp--helm-got-usages quickfixes))
-             (t (message "No usages found"))))))
+             (t (message "No usages found")))))))
 
   (defun omnisharp--helm-jump-to-candidate (json-result)
     (omnisharp-go-to-file-line-and-column json-result)
     (helm-highlight-current-line nil nil nil nil t))
 
-  ;;; Helm find symbols
-  (defun omnisharp-helm-find-symbols ()
+  (defun omnisharp-find-symbols ()
+    "Find symbols"
     (interactive)
-    (helm :sources (helm-build-async-source "Omnisharp - Find Symbols"
-                                     :action 'omnisharp--helm-jump-to-candidate
-                                     :match '((lambda (candidate) (string-match-p
-                                                                   helm-pattern
-                                                                   (nth 1 (split-string
-                                                                           candidate ":" t)))))
-                                     :candidates-process 'omnisharp--helm-find-symbols-candidates)
-          :input-idle-delay 0.5
-          :buffer "*Omnisharp Symbols*"
-          :truncate-lines t))
+    (ivy-read "find symbols:"
+              #'omnisharp--find-symbols-candidates
+              :dynamic-collection t
+              :action (lambda (x)
+                        (message "%s" (get-text-property 0 'property x))
+                        (omnisharp-go-to-file-line-and-column (get-text-property 0 'property x)))
+              :caller 'omnisharp-find-symbols
+              ))
 
-  (defun omnisharp--helm-find-symbols-candidates ()
-    (when (or (and omnisharp-find-symbols-filter-async (not (string= helm-input "")))
-              (not omnisharp-find-symbols-filter-async))
-    (let (candidates)
-      (message "fetching new candidates %s" helm-input)
-      (omnisharp--send-command-to-server-sync
-       "findsymbols"
-       (cons `(Filter . ,helm-input)
-             (omnisharp--get-request-object))
-       (-lambda ((&alist 'QuickFixes quickfixes))
-                (setq candidates
-                      (-map 'omnisharp--helm-find-symbols-transform-candidate
-                            quickfixes))))
-      candidates)))
+  (defun omnisharp--find-symbols-candidates (&optional input ok we)
+    (if (<  (length input) 4)
+        '("More chars...")
+      (let (candidates)
+        (omnisharp--send-command-to-server-sync
+         "findsymbols"
+         (cons `(Filter . ,input)
+               (omnisharp--get-request-object))
+         (-lambda ((&alist 'QuickFixes quickfixes))
+           (setq candidates
+                 (-map 'omnisharp--avy-find-symbols-transform-candidate
+                       quickfixes))))
+        candidates)))
 
-  (defun omnisharp--helm-find-symbols-transform-candidate (candidate)
-    "Convert a quickfix entry into helm output"
-    (cons
-     (format "%s : %s"
-             (propertize (cdr (assoc 'FileName candidate))
-                         'face 'helm-grep-file)
-             (nth 0 (split-string (cdr (assoc 'Text candidate)) "(")))
-     candidate)))
+  (defun omnisharp--avy-find-symbols-transform-candidate (candidate)
+    "Convert a quickfix entry into ivy output"
+    (propertize (format "%s: %s" (file-relative-name (cdr (assoc 'FileName candidate)) (projectile-project-root)) (cdr (assoc 'Text candidate))) 'property candidate))
 
 ;;; Helm list projects
 (defun omnisharp-helm-projects ()
