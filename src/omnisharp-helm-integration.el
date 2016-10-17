@@ -85,19 +85,9 @@ seconds."
 `omnisharp-go-to-file-line-and-column'"
   (omnisharp-go-to-file-line-and-column (get-text-property 0 'property x)))
 
-;;; Helm list projects
-(defun omnisharp-helm-projects ()
+(defun omnisharp-projects ()
+  "List all the projects in solution"
   (interactive)
-  (helm :sources (helm-build-async-source "Omnisharp - Projects"
-                   :action 'omnisharp--helm-jump-to-file
-                   :matchplugin nil
-                   :candidates-process 'omnisharp--helm-projects-candidates)
-        :truncate-lines t))
-
-(defun omnisharp--helm-jump-to-file (candidate)
-  (find-file (cdr candidate)))
-
-(defun omnisharp--helm-projects-candidates ()
   (let (candidates)
     (omnisharp--send-command-to-server-sync
      "projects"
@@ -105,10 +95,15 @@ seconds."
           (cons '(ExcludeSourceFiles . t)))
      (lambda (data)
        (let ((projects (cdr (assoc 'Projects (cdr (assoc 'MsBuild data))))))
-         (setq candidates (-map '(lambda (candidate) (cons (format "%s" (cdr (assoc 'AssemblyName candidate))) (list (assoc 'Path candidate)))) projects))
-         ))
-     nil)
-    candidates))
+         (setq candidates (-map '(lambda (candidate) (propertize (cdr (assoc 'AssemblyName candidate)) 'property candidate)) projects))
+         )))
+    (ivy-read "projects: "
+              candidates
+              :action (lambda (x) (omnisharp--jump-to-file (list (assoc 'Path (get-text-property 0 'property x)))))
+              )))
+
+(defun omnisharp--jump-to-file (candidate)
+  (find-file (cdr candidate)))
 
 (defun omnisharp-current-file-members ()
   "Show a list of all members in the current file, and jump to the
