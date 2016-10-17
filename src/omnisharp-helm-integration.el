@@ -99,13 +99,11 @@ seconds."
          )))
     (ivy-read "projects: "
               candidates
-              :action (lambda (x) (omnisharp--jump-to-file (list (assoc 'Path (get-text-property 0 'property x)))))
+              :action '(1
+                        ("o" (lambda (x) (omnisharp--jump-to-file (list (assoc 'Path (get-text-property 0 'property x))))))
+                        ("b" (lambda (x) (omnisharp--build-project `(FileName . ,(cdr (assoc 'Path (get-text-property 0 'property x)))))) "build"))
               :caller 'omnisharp-projects
               )))
-
-(ivy-set-actions
- 'omnisharp-projects
- '(("b" (lambda (x) (omnisharp--build-project `(FileName . ,(cdr (assoc 'Path (get-text-property 0 'property x)))))) "build")))
 
 (defun omnisharp--jump-to-file (candidate)
   (find-file (cdr candidate)))
