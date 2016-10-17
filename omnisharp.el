@@ -490,7 +490,7 @@ cursor at that location"
   (omnisharp--build-project (assoc 'FileName (omnisharp--get-request-object))))
 
 (defun omnisharp--build-project (filename)
-  (message "Build started... %s" filename)
+  (message "Build started...")
   (omnisharp--send-command-to-server-sync
    "buildproject"
    (->> (list filename)
