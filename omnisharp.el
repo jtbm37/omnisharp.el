@@ -487,10 +487,13 @@ cursor at that location"
 
 (defun omnisharp-build-current-project ()
   (interactive)
-  (message "Build started...")
+  (omnisharp--build-project (assoc 'FileName (omnisharp--get-request-object))))
+
+(defun omnisharp--build-project (filename)
+  (message "Build started... %s" filename)
   (omnisharp--send-command-to-server-sync
    "buildproject"
-   (->> (list (assoc 'FileName (omnisharp--get-request-object)))
+   (->> (list filename)
         (cons '(Language . "C#")))
    (lambda (response)
      (if (eq (cdr (assoc 'Success response)) t)
