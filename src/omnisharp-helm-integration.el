@@ -48,39 +48,42 @@ seconds."
               (omnisharp--helm-got-usages quickfixes))
              (t (message "No usages found")))))))
 
-  (defun omnisharp--helm-jump-to-candidate (json-result)
-    (omnisharp-go-to-file-line-and-column json-result)
-    (helm-highlight-current-line nil nil nil nil t))
+(defun omnisharp--helm-jump-to-candidate (json-result)
+  (omnisharp-go-to-file-line-and-column json-result)
+  (helm-highlight-current-line nil nil nil nil t))
 
-  (defun omnisharp-find-symbols ()
-    "Find symbols"
-    (interactive)
-    (ivy-read "find symbols:"
-              #'omnisharp--find-symbols-candidates
-              :dynamic-collection t
-              :action (lambda (x)
-                        (message "%s" (get-text-property 0 'property x))
-                        (omnisharp-go-to-file-line-and-column (get-text-property 0 'property x)))
-              :caller 'omnisharp-find-symbols
-              ))
+(defun omnisharp-find-symbols ()
+  "Find symbols"
+  (interactive)
+  (ivy-read "find symbols:"
+            #'omnisharp--find-symbols-candidates
+            :dynamic-collection t
+            :action 'omnisharp--avy-go-to-file-and-column
+            :caller 'omnisharp-find-symbols
+            ))
 
-  (defun omnisharp--find-symbols-candidates (&optional input ok we)
-    (if (<  (length input) 4)
-        '("More chars...")
-      (let (candidates)
-        (omnisharp--send-command-to-server-sync
-         "findsymbols"
-         (cons `(Filter . ,input)
-               (omnisharp--get-request-object))
-         (-lambda ((&alist 'QuickFixes quickfixes))
-           (setq candidates
-                 (-map 'omnisharp--avy-find-symbols-transform-candidate
-                       quickfixes))))
-        candidates)))
+(defun omnisharp--find-symbols-candidates (&optional input ok we)
+  (if (<  (length input) 4)
+      '("More chars...")
+    (let (candidates)
+      (omnisharp--send-command-to-server-sync
+       "findsymbols"
+       (cons `(Filter . ,input)
+             (omnisharp--get-request-object))
+       (-lambda ((&alist 'QuickFixes quickfixes))
+         (setq candidates
+               (-map 'omnisharp--avy-find-symbols-transform-candidate
+                     quickfixes))))
+      candidates)))
 
-  (defun omnisharp--avy-find-symbols-transform-candidate (candidate)
-    "Convert a quickfix entry into ivy output"
-    (propertize (format "%s: %s" (file-relative-name (cdr (assoc 'FileName candidate)) (projectile-project-root)) (cdr (assoc 'Text candidate))) 'property candidate))
+(defun omnisharp--avy-find-symbols-transform-candidate (candidate)
+  "Convert a quickfix entry into ivy output"
+  (propertize (format "%s: %s" (file-relative-name (cdr (assoc 'FileName candidate)) (projectile-project-root)) (cdr (assoc 'Text candidate))) 'property candidate))
+
+(defun omnisharp--avy-go-to-file-and-column (x)
+  "Parses a string with extra properties and passes it to
+`omnisharp-go-to-file-line-and-column'"
+  (omnisharp-go-to-file-line-and-column (get-text-property 0 'property x)))
 
 ;;; Helm list projects
 (defun omnisharp-helm-projects ()
@@ -107,19 +110,19 @@ seconds."
      nil)
     candidates))
 
-(defun omnisharp-helm-current-file-members ()
+(defun omnisharp-current-file-members ()
   "Show a list of all members in the current file, and jump to the
 selected member. With prefix argument, use another window."
   (interactive)
+  (let (candidates)
     (omnisharp--send-command-to-server
      "currentfilemembersasflat"
      (omnisharp--get-request-object)
      (lambda (quickfixes)
        (setq candidates (-map (lambda (q)
-                                (cons  (cdr  (assoc 'Text q)) q)) (append quickfixes nil)))
-       (helm :sources (helm-make-source "OmniSharp - File Members" 'helm-source-sync
-                        :action 'omnisharp-go-to-file-line-and-column
-                        :candidates candidates)
-             ))))
+                                (propertize (cdr (assoc 'Text q)) 'property q)) quickfixes))))
+    (ivy-read "file members:" candidates
+              :action 'omnisharp--avy-go-to-file-and-column
+              :caller 'omnisharp-current-file-members)))
 
 (provide 'omnisharp-helm-integration)
