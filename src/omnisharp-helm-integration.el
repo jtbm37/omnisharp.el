@@ -88,6 +88,10 @@ seconds."
 (defun omnisharp-projects ()
   "List all the projects in solution"
   (interactive)
+  (omnisharp--avy-projects))
+
+(cl-defun omnisharp--avy-projects (&optional (default-action 1))
+  "Shows list of projects. `defaction' defines the default ivy action on submit."
   (let (candidates)
     (omnisharp--send-command-to-server-sync
      "projects"
@@ -99,11 +103,16 @@ seconds."
          )))
     (ivy-read "projects: "
               candidates
-              :action '(1
+              :action `(,default-action
                         ("o" (lambda (x) (omnisharp--jump-to-file (list (assoc 'Path (get-text-property 0 'property x))))))
                         ("b" (lambda (x) (omnisharp--build-project `(FileName . ,(cdr (assoc 'Path (get-text-property 0 'property x)))))) "build"))
               :caller 'omnisharp-projects
               )))
+
+(defun omnisharp-build-project ()
+  "Builds selected project"
+  (interactive)
+  (omnisharp--avy-projects 2))
 
 (defun omnisharp--jump-to-file (candidate)
   (find-file (cdr candidate)))
