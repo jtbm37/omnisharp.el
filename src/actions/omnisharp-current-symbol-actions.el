@@ -83,15 +83,6 @@ ring."
           (t
            (omnisharp--choose-and-go-to-quickfix-ido quickfixes other-window)))))
 
-(defun omnisharp-find-usages-with-ido (&optional other-window)
-  (interactive "P")
-  (omnisharp--send-command-to-server
-   "findusages"
-   (omnisharp--get-request-object)
-   (lambda (quickfix-response)
-     (omnisharp--show-or-navigate-to-quickfixes-with-ido quickfix-response
-                                                         other-window))))
-
 (defun omnisharp-find-implementations ()
   "Show a buffer containing all implementations of the interface under
 point, or classes derived from the class under point. Allow the user

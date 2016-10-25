@@ -98,7 +98,6 @@ server backend."
      ["Show documentation" omnisharp-current-type-documentation]
      ["Show type and add it to kill ring" omnisharp-current-type-information-to-kill-ring]
      ["Find usages" omnisharp-find-usages]
-     ["Find usages with ido" omnisharp-find-usages-with-ido]
      ["Find implementations" omnisharp-find-implementations]
      ["Find implementations with ido" omnisharp-find-implementations-with-ido]
      ["Rename" omnisharp-rename]
