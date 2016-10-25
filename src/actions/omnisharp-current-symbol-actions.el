@@ -45,23 +45,33 @@ ring."
 (defun omnisharp-find-usages ()
   "Find usages for the symbol under point"
   (interactive)
-  (message "Finding usages...")
-  (omnisharp--send-command-to-server
-   "findusages"
-   (->>
-    (omnisharp--get-request-object)
-    (cons `(ExcludeDefinition . ,(omnisharp--t-or-json-false
-                                 omnisharp-find-usages-exclude-definition))))
-   (-lambda ((&alist 'QuickFixes quickfixes))
-            (omnisharp--find-usages-show-response quickfixes))))
+  (let ((candidates (omnisharp--get-usages-from-server)))
+    (ivy-read "usages:" candidates
+              :action 'omnisharp--avy-go-to-file-and-column
+              :caller 'omnisharp-find-usages)))
 
-(defun omnisharp--find-usages-show-response (quickfixes)
+(defun omnisharp--get-usages-from-server ()
+  "Returns a list of all usages of symbol at point"
+  (let (cands)
+    (omnisharp--send-command-to-server
+     "findusages"
+     (->> (omnisharp--get-request-object)
+          (cons `(ExcludeDefinition . ,(omnisharp--t-or-json-false
+                                        omnisharp-find-usages-exclude-definition))))
+     (-lambda ((&alist 'QuickFixes quickfixes))
+       (setq cands (omnisharp--find-usages-format quickfixes))))
+    cands))
+
+(defun omnisharp--find-usages-format (quickfixes)
   (if (equal 0 (length quickfixes))
       (message "No usages found.")
-    (omnisharp--write-quickfixes-to-compilation-buffer
-     quickfixes
-     omnisharp--find-usages-buffer-name
-     omnisharp-find-usages-header)))
+    (-map (-lambda ((x &as &alist
+                       'Text text
+                       'FileName file
+                       'Line line))
+            (propertize (format "%s(%s): %s"
+                                (propertize (file-name-nondirectory file) 'face 'helm-grep-file)
+                                (propertize (number-to-string line) 'face 'helm-grep-lineno) text) 'property x)) quickfixes)))
 
 (defun omnisharp-find-implementations-with-ido (&optional other-window)
   (interactive "P")
