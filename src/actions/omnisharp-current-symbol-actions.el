@@ -6,6 +6,9 @@
   :type '(choice (const :tag "Yes" t)
                  (const :tag "No" nil)))
 
+(defvar omnisharp-project-dir-occur nil
+  "Holds the current project directory for `ivy-occur'")
+
 (defun omnisharp-current-type-information (&optional add-to-kill-ring)
   "Display information of the current type under point. With prefix
 argument, add the displayed result to the kill ring. This can be used
@@ -42,13 +45,31 @@ ring."
   (interactive)
   (omnisharp-current-type-information t))
 
+(ivy-set-occur 'omnisharp-find-usages 'omnisharp-find-usages-occur)
+
 (defun omnisharp-find-usages ()
   "Find usages for the symbol under point"
   (interactive)
+  (setq omnisharp-project-dir-occur (projectile-project-root))
   (let ((candidates (omnisharp--get-usages-from-server)))
     (ivy-read "usages:" candidates
               :action 'omnisharp--avy-go-to-file-and-column
               :caller 'omnisharp-find-usages)))
+
+(defun omnisharp-find-usages-occur ()
+  "Generates a custom occur buffer to work with `wgrep'"
+  (unless (eq major-mode 'ivy-occur-grep-mode)
+    (ivy-occur-grep-mode))
+  (setq default-directory omnisharp-project-dir-occur)
+  ;; Need precise number of header lines for `wgrep' to work.
+  (let ((cands ivy--all-candidates))
+    (insert (format "-*- mode:grep; default-directory: %S -*-\n\n\n"
+                    omnisharp-project-dir-occur))
+    (insert (format "%d candidates:\n" (length cands)))
+    (ivy--occur-insert-lines
+     (mapcar
+      (lambda (cand) (concat "./" cand))
+      cands))))
 
 (defun omnisharp--get-usages-from-server ()
   "Returns a list of all usages of symbol at point"
@@ -69,8 +90,8 @@ ring."
                        'Text text
                        'FileName file
                        'Line line))
-            (propertize (format "%s(%s): %s"
-                                (propertize (file-name-nondirectory file) 'face 'helm-grep-file)
+            (propertize (format "%s:%s:%s"
+                                (propertize (file-relative-name file omnisharp-project-dir-occur) 'face 'helm-grep-file)
                                 (propertize (number-to-string line) 'face 'helm-grep-lineno) text) 'property x)) quickfixes)))
 
 (defun omnisharp-find-implementations-with-ido (&optional other-window)
