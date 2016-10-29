@@ -74,7 +74,7 @@ ring."
 (defun omnisharp--get-usages-from-server ()
   "Returns a list of all usages of symbol at point"
   (let (cands)
-    (omnisharp--send-command-to-server
+    (omnisharp--send-command-to-server-sync
      "findusages"
      (->> (omnisharp--get-request-object)
           (cons `(ExcludeDefinition . ,(omnisharp--t-or-json-false
