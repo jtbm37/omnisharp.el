@@ -52,9 +52,13 @@ ring."
   (interactive)
   (setq omnisharp-project-dir-occur (projectile-project-root))
   (let ((candidates (omnisharp--get-usages-from-server)))
-    (ivy-read "usages:" candidates
-              :action 'omnisharp--avy-go-to-file-and-column
-              :caller 'omnisharp-find-usages)))
+    (cond ((= (length candidates) 1)
+           (omnisharp--avy-go-to-file-and-column (car candidates)))
+          ((> (length candidates) 1)
+           (ivy-read "usages:" candidates
+                     :action 'omnisharp--avy-go-to-file-and-column
+                     :caller 'omnisharp-find-usages))
+          (t (message "No usages found")))))
 
 (defun omnisharp-find-usages-occur ()
   "Generates a custom occur buffer to work with `wgrep'"
