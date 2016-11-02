@@ -87,6 +87,8 @@ ring."
        (setq cands (omnisharp--find-usages-format quickfixes))))
     cands))
 
+(make-face 'omnisharp-file-face)
+(make-face 'omnisharp-lineno-face)
 (defun omnisharp--find-usages-format (quickfixes)
   (if (equal 0 (length quickfixes))
       (message "No usages found.")
@@ -95,8 +97,9 @@ ring."
                        'FileName file
                        'Line line))
             (propertize (format "%s:%s:%s"
-                                (propertize (file-relative-name file omnisharp-project-dir-occur) 'face 'helm-grep-file)
-                                (propertize (number-to-string line) 'face 'helm-grep-lineno) text) 'property x)) quickfixes)))
+				(propertize (file-relative-name file omnisharp-project-dir-occur) 'face 'omnisharp-file-face)
+				(propertize (number-to-string line) 'face 'omnisharp-lineno-face) text) 'property x))
+	  quickfixes)))
 
 (defun omnisharp-find-implementations-with-ido (&optional other-window)
   (interactive "P")
