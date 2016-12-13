@@ -105,7 +105,8 @@ seconds."
               candidates
               :action `(,default-action
                         ("o" (lambda (x) (omnisharp--jump-to-file (list (assoc 'Path (get-text-property 0 'property x))))))
-                        ("b" (lambda (x) (omnisharp--build-project `(FileName . ,(cdr (assoc 'Path (get-text-property 0 'property x)))))) "build"))
+                        ("b" (lambda (x) (omnisharp--build-project `(FileName . ,(cdr (assoc 'Path (get-text-property 0 'property x)))))) "build - Debug")
+			("r" (lambda (x) (omnisharp--build-project `(FileName . ,(cdr (assoc 'Path (get-text-property 0 'property x)))) t)) "build - Release"))
               :caller 'omnisharp-projects
               )))
 

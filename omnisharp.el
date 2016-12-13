@@ -488,15 +488,18 @@ cursor at that location"
   (interactive)
   (omnisharp--build-project (assoc 'FileName (omnisharp--get-request-object))))
 
-(defun omnisharp--build-project (filename)
+(defun omnisharp--build-project (filename &optional release)
   (message "Build started...")
+  (unless release (setq release nil))
   (omnisharp--send-command-to-server-sync
    "buildproject"
    (->> (list filename)
-        (cons '(Language . "C#")))
+	(cons `(Configuration . ,(cond (release "Release")
+				       (t "Debug"))))
+	(cons '(Language . "C#")))
    (lambda (response)
      (if (eq (cdr (assoc 'Success response)) t)
-         (message "Build completed")
+	 (message "Build completed")
        (message "Build failed!"))
      (run-hook-with-args 'omnisharp-build-functions response))
    t))
