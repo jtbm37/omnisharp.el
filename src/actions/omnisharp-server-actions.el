@@ -22,17 +22,18 @@
   "Save all csharp buffers to ensure the server is in sync"
   (save-some-buffers 't `(lambda() (string-equal (file-name-extension (buffer-name)) "cs")))
 
-  (setq omnisharp--server-info
-        (make-omnisharp--server-info
-         ;; use a pipe for the connection instead of a pty
-         (let ((process-connection-type nil)
-               (process (start-process
-                         "OmniServer" ; process name
-                         "OmniServer" ; buffer name
-                         omnisharp-server-executable-path
-                         "--stdio" "-s" (expand-file-name path-to-project))))
-           (set-process-filter process 'omnisharp--handle-server-message)
-           process))))
+  (let ((root (projectile-project-root)))
+    (puthash root (make-omnisharp--server-info
+		   ;; use a pipe for the connection instead of a pty
+		   (let ((process-connection-type nil)
+			 (process (start-process
+				   "OmniServer" ; process name
+				   "OmniServer" ; buffer name
+				   omnisharp-server-executable-path
+				   "--stdio" "-s" (expand-file-name path-to-project))))
+		     (set-process-filter process 'omnisharp--handle-server-message)
+		     process) 'io)
+	     omnisharp--server-info)))
 
 ;;;###autoload
 (defun omnisharp-check-alive-status ()

@@ -8,11 +8,6 @@ instance that works in the background."
   :group 'external
   :group 'csharp)
 
-(defcustom omnisharp-host "http://localhost:2000/"
-  "Currently expected to end with a / character."
-  :group 'omnisharp
-  :type 'string)
-
 (defvar omnisharp--find-usages-buffer-name "* OmniSharp : Usages *"
   "The name of the temporary buffer that is used to display the
 results of a 'find usages' call.")

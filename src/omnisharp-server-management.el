@@ -1,8 +1,10 @@
-(defvar omnisharp--server-info nil)
-(defvar omnisharp-use-http nil "Set to t to use http instead of stdio.")
+(defvar omnisharp--server-info (make-hash-table :test 'equal))
+(defvar omnisharp-default-http "http://localhost:2000/" "Set default http address")
+(defvar-local omnisharp--project-root nil)
 
-(defun make-omnisharp--server-info (process)
+(defun make-omnisharp--server-info (process kind)
   `((:process . ,process)
+    (:kind . ,kind)
     ;; This is incremented for each request. Do not modify it in other
     ;; places.
     (:request-id . 1)
@@ -10,67 +12,69 @@
     (:response-handlers . nil)
     (:started? . nil)))
 
+(defun omnisharp--get-project-info ()
+  (unless omnisharp--project-root
+    (setq-local omnisharp--project-root (projectile-project-root)))
+  (gethash omnisharp--project-root omnisharp--server-info))
+
 (defun omnisharp--clear-response-handlers ()
   "For development time cleaning up impossible states of response
 handlers in the current omnisharp--server-info."
-  (setcdr (assoc :response-handlers omnisharp--server-info)
+  (setcdr (assoc :response-handlers (omnisharp--get-project-info))
           nil))
 
 (defmacro comment (&rest body) nil)
 (comment (omnisharp--clear-response-handlers))
 
 (defun omnisharp--send-command-to-server (api-name contents &optional response-handler async)
-  "Sends the given command to the server.
-Depending on omnisharp-use-http it will either send it via http or stdio.
+  "Sends the given command to the server either via http or stdio.
 The variable ASYNC has no effect when not using http."
+  (let* ((root (projectile-project-root))
+	 (project-info (gethash root omnisharp--server-info)))
+    (unless project-info
+      (if (yes-or-no-p "Use http ?")
+	  (setq project-info (puthash root (make-omnisharp--server-info (read-from-minibuffer "http address: " omnisharp-default-http) 'http) omnisharp--server-info))
+	(error "Start server with `omnisharp-start-omnisharp-server'.")))
+    (if (eq (alist-get :kind project-info) 'http)
+	(omnisharp--send-command-to-server-http (concat (alist-get :process project-info) api-name) contents response-handler async)
+      (omnisharp--send-command-to-server-stdio project-info api-name contents response-handler))))
 
-  (if omnisharp-use-http
-      (omnisharp--send-command-to-server-http api-name contents response-handler async)
-    (omnisharp--send-command-to-server-stdio api-name contents response-handler)))
-
-(defun omnisharp--send-command-to-server-http (api-name contents response-handler &optional async)
+(defun omnisharp--send-command-to-server-http (url contents response-handler &optional async)
   "Sends the given command via curl"
-  (omnisharp-post-http-message api-name response-handler contents async))
+  (omnisharp-post-http-message url response-handler contents async))
 
-(defun omnisharp--send-command-to-server-stdio (api-name contents &optional response-handler)
+(defun omnisharp--send-command-to-server-stdio (project-info api-name contents &optional response-handler)
   "Sends the given command to the server and associates a
 response-handler for it. The server will respond to this request
 later and the response handler will get called then.
 
 Returns the unique request id that the request is given before
 sending."
-  ;; make RequestPacket with request-id
-  ;; send request
-  ;; store response handler associated with the request id
-  (if (equal nil omnisharp--server-info)
-      (message (concat "OmniSharp server not running. "
-                       "Start it with `omnisharp-start-omnisharp-server' first"))
-    (-let* ((server-info omnisharp--server-info)
-            ((&alist :process process
-                     :request-id request-id) server-info)
-            (request (omnisharp--make-request-packet api-name
-                                                     contents
-                                                     request-id)))
-      (when omnisharp-debug
-        (omnisharp--log (format "--> %s %s %s"
-                                request-id
-                                api-name
-                                (prin1-to-string request))))
+  (-let* (((&alist :process process
+		   :request-id request-id) project-info)
+	  (request (omnisharp--make-request-packet api-name
+						   contents
+						   request-id)))
+    (when omnisharp-debug
+      (omnisharp--log (format "--> %s %s %s"
+			      request-id
+			      api-name
+			      (prin1-to-string request))))
 
-      ;; update current request-id and associate a response-handler for
-      ;; this request
-      (setcdr (assoc :request-id server-info) (+ 1 request-id))
+    ;; update current request-id and associate a response-handler for
+    ;; this request
+    (setcdr (assoc :request-id project-info) (+ 1 request-id))
 
-      ;; requests that don't require handling are still added with a
-      ;; dummy handler. This means they are pending. This is required
-      ;; so that omnisharp--wait-until-request-completed can know when
-      ;; the requests have completed.
-      (setcdr (assoc :response-handlers server-info)
-              (-concat `((,request-id . ,(or response-handler #'identity)))
-                       (cdr (assoc :response-handlers server-info))))
+    ;; requests that don't require handling are still added with a
+    ;; dummy handler. This means they are pending. This is required
+    ;; so that omnisharp--wait-until-request-completed can know when
+    ;; the requests have completed.
+    (setcdr (assoc :response-handlers project-info)
+	    (-concat `((,request-id . ,(or response-handler #'identity)))
+		     (cdr (assoc :response-handlers project-info))))
 
-      (process-send-string process (concat (json-encode request) "\n"))
-      request-id)))
+    (process-send-string process (concat (json-encode request) "\n"))
+    request-id))
 
 (defun omnisharp--send-command-to-server-sync (&rest args)
   "Like `omnisharp--send-command-to-server' but will block until the
@@ -144,7 +148,7 @@ process buffer, and handle them as server events"
   "Takes an alist representing some kind of Packet, possibly a
 ResponsePacket or an EventPacket, and processes it depending on
 its type."
-  (let ((server-info omnisharp--server-info))
+  (let ((server-info (omnisharp--get-project-info)))
     (cond ((omnisharp--ignorable-packet? packet)
            nil)
 

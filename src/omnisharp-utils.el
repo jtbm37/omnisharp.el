@@ -244,14 +244,15 @@ changes to be applied to that buffer instead."
 
 (defun omnisharp--handler-exists-for-request (request-id)
   (--any? (= request-id (car it))
-          (cdr (assoc :response-handlers omnisharp--server-info))))
+          (cdr (assoc :response-handlers (omnisharp--get-project-info)))))
 
 (defun omnisharp--wait-until-request-completed (request-id
                                                 &optional timeout-seconds)
   (setq timeout-seconds (or timeout-seconds 2))
 
-  (let ((start-time (current-time))
-        (process (cdr (assoc :process omnisharp--server-info))))
+  (let* ((start-time (current-time))
+	 (project-info (omnisharp--get-project-info))
+        (process (cdr (assoc :process project-info))))
     (while (omnisharp--handler-exists-for-request request-id)
       (when (> (cadr (time-subtract (current-time) start-time))
                timeout-seconds)

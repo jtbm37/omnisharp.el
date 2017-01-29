@@ -5,13 +5,10 @@
       omnisharp-host
     (concat omnisharp-host "/")))
 
-(defun omnisharp--get-api-url (api-name)
-  (concat (omnisharp--get-host) api-name))
-
 ;;;###autoload
 (defun omnisharp-post-http-message (url callback &optional params async)
   "Post http request to server. Return result."
-  (omnisharp--submit-request (omnisharp--get-api-url url) callback params async))
+  (omnisharp--submit-request url callback params async))
 
 (defun omnisharp--submit-request (url callback &optional params async)
   (if (require 'request nil 'noerror)
